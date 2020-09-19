@@ -1,6 +1,7 @@
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildChannel;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
@@ -9,6 +10,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.RoleAction;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import net.dv8tion.jda.api.utils.cache.MemberCacheView;
 
 import javax.security.auth.login.LoginException;
 import java.io.*;
@@ -27,7 +30,8 @@ public class TroyBot extends ListenerAdapter {
 
     public static void main(String[] args) throws LoginException, InterruptedException {
         String token = BotToken.getToken();
-        JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
+        JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS)
+                .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(new TroyBot())
                 .setActivity(Activity.playing("Type !help"))
                 .build();
@@ -40,7 +44,6 @@ public class TroyBot extends ListenerAdapter {
         List<Member> mentions = msg.getMentionedMembers();
         MessageChannel channel = event.getChannel();
         String s = msg.getContentRaw();
-
 
 
         // TroyBot IDs: "748358969294061598", "748395222177677355"
@@ -392,9 +395,24 @@ public class TroyBot extends ListenerAdapter {
             if (roles.size() > 0) {
                 Role role = roles.get(0);
                 List<Member> members = guild.getMembers();
-                System.out.println(members);
                 for (Member m : members) {
                     guild.removeRoleFromMember(m, role).queue();
+                }
+            }
+        } else if (s.startsWith("!hiking remove") || s.startsWith("!hike remove") || s.startsWith("!hiking rm") || s.startsWith("!hike rm")) {
+            List<Role> roles = guild.getRolesByName("hiking-this-week", true);
+            if (roles.size() > 0) {
+                Role role = roles.get(0);
+                for (Member m : mentions) {
+                    guild.removeRoleFromMember(m, role).queue();
+                }
+            }
+        } else {
+            List<Role> roles = guild.getRolesByName("hiking-this-week", true);
+            if (roles.size() > 0) {
+                Role role = roles.get(0);
+                for (Member m : mentions) {
+                    guild.addRoleToMember(m, role).queue();
                 }
             }
         }
