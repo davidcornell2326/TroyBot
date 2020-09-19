@@ -21,7 +21,7 @@ public class TroyBot extends ListenerAdapter {
     private String currentCases = "";
 
     public static void main(String[] args) throws LoginException, InterruptedException {
-        String token = "NzQ4MzU4OTY5Mjk0MDYxNTk4.X0cRmg.EtdrsY0EqumtWsunW9v_7YSr63U";
+        String token = BotToken.getToken();
         JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
                 .addEventListeners(new TroyBot())
                 .setActivity(Activity.playing("Type !help"))
