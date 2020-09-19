@@ -1,0 +1,1 @@
+java -cp C:\Users\David\OneDrive\Documents\TroyBot\out\artifacts\TroyBot_jar\TroyBot.jar TroyBot
