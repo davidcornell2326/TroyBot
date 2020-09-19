@@ -1,15 +1,14 @@
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.api.requests.restaction.RoleAction;
 
 import javax.security.auth.login.LoginException;
 import java.io.*;
@@ -23,6 +22,7 @@ import java.util.Timer;
 public class TroyBot extends ListenerAdapter {
     private MessageChannel startChannel;
     private String currentCases = "";
+    private Guild guild;
 
 
     public static void main(String[] args) throws LoginException, InterruptedException {
@@ -34,8 +34,8 @@ public class TroyBot extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event)
-    {
+    public void onMessageReceived(MessageReceivedEvent event) {
+        guild = event.getGuild();
         Message msg = event.getMessage();
         List<Member> mentions = msg.getMentionedMembers();
         MessageChannel channel = event.getChannel();
@@ -71,6 +71,10 @@ public class TroyBot extends ListenerAdapter {
             complimentEveryone(channel);
         } else if (s.startsWith("!compliment")) {
             compliment(channel, mentions);
+        } else if (s.startsWith("!role")) {
+            role(channel, mentions, s);
+        } else if (s.startsWith("!hiking") || s.startsWith("!hike")) {
+            hiking(channel, mentions, s);
         }
     }
 
@@ -347,5 +351,52 @@ public class TroyBot extends ListenerAdapter {
         }
         String comp = scan.nextLine();
         return comp;
+
+    }
+
+    private void role(MessageChannel channel, List<Member> mentions, String s) {
+        if (s.startsWith("!role add")) {
+            int start = s.indexOf('\"');
+            int end = s.lastIndexOf('\"');
+            String roleName = s.substring(start + 1, end);
+            if (roleName.equals("hiking") || roleName.equals("hike")) {
+                roleName = "hiking-this-week";
+            }
+            List<Role> roles = guild.getRolesByName(roleName, true);
+            if (roles.size() > 0) {
+                Role role = roles.get(0);
+                for (Member m : mentions) {
+                    guild.addRoleToMember(m, role).queue();
+                }
+            }
+        } else if (s.startsWith("!role remove") || s.startsWith("!role rm")) {
+            int start = s.indexOf('\"');
+            int end = s.lastIndexOf('\"');
+            String roleName = s.substring(start + 1, end);
+            if (roleName.equals("hiking") || roleName.equals("hike")) {
+                roleName = "hiking-this-week";
+            }
+            List<Role> roles = guild.getRolesByName(roleName, true);
+            if (roles.size() > 0) {
+                Role role = roles.get(0);
+                for (Member m : mentions) {
+                    guild.removeRoleFromMember(m, role).queue();
+                }
+            }
+        }
+    }
+
+    private void hiking(MessageChannel channel, List<Member> mentions, String s) {
+        if (s.equals("!hiking clear") || s.equals("!hike clear")) {
+            List<Role> roles = guild.getRolesByName("hiking-this-week", true);
+            if (roles.size() > 0) {
+                Role role = roles.get(0);
+                List<Member> members = guild.getMembers();
+                System.out.println(members);
+                for (Member m : members) {
+                    guild.removeRoleFromMember(m, role).queue();
+                }
+            }
+        }
     }
 }
