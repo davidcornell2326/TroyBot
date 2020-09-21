@@ -48,36 +48,56 @@ public class TroyBot extends ListenerAdapter {
 
         // TroyBot IDs: "748358969294061598", "748395222177677355"
 
-        if (msg.getContentRaw().contains("748358969294061598") || msg.getContentRaw().contains("748395222177677355")) {
+        if ((msg.getContentRaw().contains("748358969294061598") || msg.getContentRaw().contains("748395222177677355"))) {
             mentionsTroyBot(channel, msg);
         }
 
-        if (s.equals("!starthere")) {
-            startChannel = event.getChannel();
-            startChannel.sendMessage("Starting daily Covid updates in channel: \"" + startChannel.getName() + "\"").queue();
-            startCasesChecks();
-        } else if (s.equals("!ping")) {
-            ping(channel);
-        } else if (s.equals("!cases")) {
-            cases(channel);
-        } else if (s.equals("!whatsthegoodword")) {
-            whatsthegoodword(channel);
-        } else if (s.equals("!bee")) {
-            bee(channel);
-        } else if (s.equals("!help")) {
-            help(channel);
-        } else if (s.equals("!plagueis")) {
-            plagueis(channel);
-        } else if (s.equals("!joke")) {
-            joke(channel);
-        } else if (s.equals("!compliment @everyone")) {
-            complimentEveryone(channel);
-        } else if (s.startsWith("!compliment")) {
-            compliment(channel, mentions);
-        } else if (s.startsWith("!role")) {
-            role(channel, mentions, s);
-        } else if (s.startsWith("!hiking") || s.startsWith("!hike")) {
-            hiking(channel, mentions, s);
+        if (s.startsWith("!")) {
+            boolean commandFound = false;
+
+            if (s.equals("!starthere")) {
+                commandFound = true;
+                startChannel = event.getChannel();
+                startChannel.sendMessage("Starting daily Covid updates in channel: \"" + startChannel.getName() + "\"").queue();
+                startCasesChecks();
+            } else if (s.equals("!ping")) {
+                commandFound = true;
+                ping(channel);
+            } else if (s.equals("!cases")) {
+                commandFound = true;
+                cases(channel);
+            } else if (s.equals("!whatsthegoodword")) {
+                commandFound = true;
+                whatsthegoodword(channel);
+            } else if (s.equals("!bee")) {
+                commandFound = true;
+                bee(channel);
+            } else if (s.startsWith("!help")) {
+                commandFound = true;
+                help(channel, s);
+            } else if (s.equals("!plagueis")) {
+                commandFound = true;
+                plagueis(channel);
+            } else if (s.equals("!joke")) {
+                commandFound = true;
+                joke(channel);
+            } else if (s.equals("!compliment @everyone")) {
+                commandFound = true;
+                complimentEveryone(channel);
+            } else if (s.startsWith("!compliment")) {
+                commandFound = true;
+                compliment(channel, mentions);
+            } else if (s.startsWith("!role")) {
+                commandFound = true;
+                role(channel, mentions, s);
+            } else if (s.startsWith("!hiking") || s.startsWith("!hike")) {
+                commandFound = true;
+                hiking(channel, mentions, s);
+            }
+
+            if (!commandFound) {
+                channel.sendMessage("I don't recognize that command. Try typing !help to see what I can do!").queue();
+            }
         }
     }
 
@@ -97,7 +117,7 @@ public class TroyBot extends ListenerAdapter {
             flag = true;
         }
         if (s.contains("help")) {
-            help(channel);
+            help(channel, s);
             flag = true;
         }
         if (s.contains("thanks") || s.contains("thank you") || s.contains("thank u")) {
@@ -112,6 +132,10 @@ public class TroyBot extends ListenerAdapter {
             channel.sendMessage(mention + " I love you too!").queue();
             flag = true;
         }
+        if (s.contains("good night")) {
+            channel.sendMessage("Good night! Don't let the bed bugs bite!").queue();
+            flag = true;
+        }
 
         if (!flag) {
             channel.sendMessage(mention + " you @'d me, but I'm not sure what you wanted. Try typing !help to see what I can do!").queue();
@@ -119,21 +143,32 @@ public class TroyBot extends ListenerAdapter {
     }
 
 
-    public void help(MessageChannel channel) {
-        String msg = "Commands I can respond to:\n"
-                + "!ping - A ping to make sure I'm working correctly\n"
-                + "!cases - I'll send an update on Covid cases from Stamps data\n"
-                + "!whatsthegoodword - I'll tell you what the good word is\n"
-                + "!bee - I'll... ah... let you figure this one out for yourself\n"
-                + "!help - I'll send this helpful guide\n"
-                + "!plagueis - Did you ever hear the tragedy of Darth Plagueis the Wise?\n"
-                + "!joke - I'll send a random Laffy Taffy joke\n"
-                + "!compliment - I'll send a compliment! You can @ people to have me direct it at them\n"
-                + "\nYou can also @ me! I can respond to \"hi,\" \"hello,\" \"thanks/thank you/thank u,\", \"love you/love u,\" \"help,\" and \"stop.\" (case-insensitive)\n"
-                + "\nAdmin commands:\n"
-                + "!starthere - starts Covid daily updates in the channel this is sent in\n"
-                + "\nI will also send a daily update whenever Covid data is updated (within 10 minutes)";
-        channel.sendMessage(msg).queue();
+    public void help(MessageChannel channel, String s) {
+        if (s.equals("!help hike") || s.equals("!help hiking")) {
+            String msg = "The !hike or !hiking commands facilitate weekly hikings using the hiking-this-week role.\n"
+                    + "Note: \"hike\" and \"hiking\" are interchangeable in every command, as are \"rm\" and \"remove\"\n\n"
+                    + "!hike - adds people to this week's hike via mentions, ex. \"!hike @DavidTennant\" (supports multiple mentions at once)\n"
+                    + "!hike list - lists out (by mentions) who is currently marked as hiking this week\n"
+                    + "!hike rm - removes people from this week's hike via mentions, ex. \"!hike rm @MattSmith\" (supports multiple mentions at once)\n"
+                    + "!hike clear - clears everyone from this week's hike";
+            channel.sendMessage(msg).queue();
+        } else {
+            String msg = "Commands I can respond to:\n"
+                    + "!ping - A ping to make sure I'm working correctly\n"
+                    + "!cases - I'll send an update on Covid cases from Stamps data\n"
+                    + "!whatsthegoodword - I'll tell you what the good word is\n"
+                    + "!bee - I'll... ah... let you figure this one out for yourself\n"
+                    + "!help - I'll send this helpful guide\n"
+                    + "!plagueis - Did you ever hear the tragedy of Darth Plagueis the Wise?\n"
+                    + "!joke - I'll send a random Laffy Taffy joke\n"
+                    + "!compliment - I'll send a compliment! You can @ people to have me direct it at them\n"
+                    + "!hike or !hiking - Type \"!help hike\" for more details\n"
+                    + "\nYou can also @ me! I can respond to \"hi,\" \"hello,\" \"thanks/thank you/thank u,\", \"love you/love u,\" \"good night,\" \"help,\" and \"stop\" (case-insensitive)\n"
+                    + "\nAdmin commands:\n"
+                    + "!starthere - starts Covid daily updates in the channel this is sent in\n"
+                    + "\nI will also send a daily update whenever Covid data is updated (within 10 minutes)";
+            channel.sendMessage(msg).queue();
+        }
     }
 
     public MessageChannel getStartChannel() {
@@ -399,6 +434,7 @@ public class TroyBot extends ListenerAdapter {
                     guild.removeRoleFromMember(m, role).queue();
                 }
             }
+            channel.sendMessage("Clearing everyone from this week's hike").queue();
         } else if (s.startsWith("!hiking remove") || s.startsWith("!hike remove") || s.startsWith("!hiking rm") || s.startsWith("!hike rm")) {
             List<Role> roles = guild.getRolesByName("hiking-this-week", true);
             if (roles.size() > 0) {
@@ -407,6 +443,24 @@ public class TroyBot extends ListenerAdapter {
                     guild.removeRoleFromMember(m, role).queue();
                 }
             }
+            String msg = "Removing from this week's hike:\n";
+            for (Member m : mentions) {
+                msg += m.getAsMention();
+            }
+            if (mentions.size() == 0) {
+                msg = "No one was mentioned, so no one was removed from this week's hike";
+            }
+            channel.sendMessage(msg).queue();
+        } else if (s.equals("!hiking list") || s.equals("!hike list")) {
+            List<Member> members = guild.getMembersWithRoles(guild.getRolesByName("hiking-this-week", true));
+            String msg = "Hiking this week:\n";
+            for (Member m : members) {
+                msg += m.getAsMention();
+            }
+            if (members.size() == 0) {
+                msg = "No one is hiking this week";
+            }
+            channel.sendMessage(msg).queue();
         } else {
             List<Role> roles = guild.getRolesByName("hiking-this-week", true);
             if (roles.size() > 0) {
@@ -415,6 +469,14 @@ public class TroyBot extends ListenerAdapter {
                     guild.addRoleToMember(m, role).queue();
                 }
             }
+            String msg = "Adding to this week's hike:\n";
+            for (Member m : mentions) {
+                msg += m.getAsMention();
+            }
+            if (mentions.size() == 0) {
+                msg = "No one was mentioned, so no one was added to this week's hike";
+            }
+            channel.sendMessage(msg).queue();
         }
     }
 }
