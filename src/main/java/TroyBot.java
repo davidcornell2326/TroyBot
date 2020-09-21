@@ -26,6 +26,7 @@ public class TroyBot extends ListenerAdapter {
     private MessageChannel startChannel;
     private String currentCases = "";
     private Guild guild;
+    private Member TroyBotAsMember;
 
 
     public static void main(String[] args) throws LoginException, InterruptedException {
@@ -44,7 +45,7 @@ public class TroyBot extends ListenerAdapter {
         List<Member> mentions = msg.getMentionedMembers();
         MessageChannel channel = event.getChannel();
         String s = msg.getContentRaw();
-
+        TroyBotAsMember = guild.getMemberById("748358969294061598");
 
         // TroyBot IDs: "748358969294061598", "748395222177677355"
 
@@ -104,6 +105,10 @@ public class TroyBot extends ListenerAdapter {
 
 
     private void mentionsTroyBot(MessageChannel channel, Message msg) {
+        if (msg.getMember().getId().equals("748358969294061598")) {
+            return;
+        }
+
         String s = msg.getContentRaw().toLowerCase();
         String mention = msg.getMember().getAsMention();
 
