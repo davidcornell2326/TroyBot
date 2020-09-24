@@ -171,7 +171,7 @@ public class TroyBot extends ListenerAdapter {
     private void test(MessageChannel channel) throws UnirestException {
         HttpResponse<JsonNode> response = Unirest.get("https://community-open-weather-map.p.rapidapi.com/weather?id=2172797&units=%2522metric%2522&q=Atlanta")
                 .header("x-rapidapi-host", "community-open-weather-map.p.rapidapi.com")
-                .header("x-rapidapi-key", "b880c7cbb5msh34a6a34b156d255p1d66f1jsna7d412577825")
+                .header("x-rapidapi-key", RapidAPIKey.getkey())
                 .asJson();
         JSONObject obj = response.getBody().getObject();
         channel.sendMessage(((JSONArray) obj.get("weather")).getJSONObject(0).get("description").toString()).queue();
