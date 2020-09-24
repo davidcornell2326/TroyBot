@@ -9,7 +9,6 @@ public class ScheduledTask extends TimerTask {
     // Add your task here
     public void run() {
         troybot.casesScheduled(troybot.getStartChannel());
-        System.out.println("FLAG");
     }
 
     public void setTroybot(TroyBot troybot) {

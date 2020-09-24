@@ -1,3 +1,6 @@
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
@@ -11,12 +14,18 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.RoleAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import net.dv8tion.jda.api.utils.cache.MemberCacheView;
+import com.mashape.unirest.*;
+import com.mashape.unirest.http.JsonNode;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.security.auth.login.LoginException;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -31,10 +40,12 @@ public class TroyBot extends ListenerAdapter {
 
     public static void main(String[] args) throws LoginException, InterruptedException {
         String token = BotToken.getToken();
-        JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS)
+        JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES,
+                GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_PRESENCES)
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(new TroyBot())
                 .setActivity(Activity.playing("Type !help"))
+                .enableCache(CacheFlag.CLIENT_STATUS)
                 .build();
     }
 
@@ -94,6 +105,16 @@ public class TroyBot extends ListenerAdapter {
             } else if (s.startsWith("!hiking") || s.startsWith("!hike")) {
                 commandFound = true;
                 hiking(channel, mentions, s);
+            } else if (s.startsWith("!list")) {
+                commandFound = true;
+                list(channel, msg);
+            } else if (s.equals("!test")) {
+                commandFound = true;
+                try {
+                    test(channel);
+                } catch (UnirestException e) {
+                    channel.sendMessage("UnirestException occurred:\n" + e).queue();
+                }
             }
 
             if (!commandFound) {
@@ -105,7 +126,7 @@ public class TroyBot extends ListenerAdapter {
 
 
     private void mentionsTroyBot(MessageChannel channel, Message msg) {
-        if (msg.getMember().getId().equals("748358969294061598")) {
+        if (msg.getMember().getId().equals("748358969294061598") || msg.getContentRaw().startsWith("!compliment")) {
             return;
         }
 
@@ -147,6 +168,16 @@ public class TroyBot extends ListenerAdapter {
         }
     }
 
+    private void test(MessageChannel channel) throws UnirestException {
+        HttpResponse<JsonNode> response = Unirest.get("https://community-open-weather-map.p.rapidapi.com/weather?id=2172797&units=%2522metric%2522&q=Atlanta")
+                .header("x-rapidapi-host", "community-open-weather-map.p.rapidapi.com")
+                .header("x-rapidapi-key", "b880c7cbb5msh34a6a34b156d255p1d66f1jsna7d412577825")
+                .asJson();
+        JSONObject obj = response.getBody().getObject();
+        channel.sendMessage(((JSONArray) obj.get("weather")).getJSONObject(0).get("description").toString()).queue();
+        // Examples: https://rapidapi.com/community/api/open-weather-map?endpoint=53aa6041e4b00287471a2b62
+        // Time (sunrise/sunset) is in seconds since 7pm Dec 31 1969
+    }
 
     public void help(MessageChannel channel, String s) {
         if (s.equals("!help hike") || s.equals("!help hiking")) {
@@ -168,9 +199,11 @@ public class TroyBot extends ListenerAdapter {
                     + "!joke - I'll send a random Laffy Taffy joke\n"
                     + "!compliment - I'll send a compliment! You can @ people to have me direct it at them\n"
                     + "!hike or !hiking - Type \"!help hike\" for more details\n"
+                    + "!list - Type !list and mention a role (or multiple) and I will tell you who all is in that role\n"
                     + "\nYou can also @ me! I can respond to \"hi,\" \"hello,\" \"thanks/thank you/thank u,\", \"love you/love u,\" \"good night,\" \"help,\" and \"stop\" (case-insensitive)\n"
                     + "\nAdmin commands:\n"
                     + "!starthere - starts Covid daily updates in the channel this is sent in\n"
+                    + "!test - whatever is currently in the test method (for debugging)\n"
                     + "\nI will also send a daily update whenever Covid data is updated (within 10 minutes)";
             channel.sendMessage(msg).queue();
         }
@@ -199,7 +232,7 @@ public class TroyBot extends ListenerAdapter {
         Timer time = new Timer(); // Instantiate Timer Object
         ScheduledTask st = new ScheduledTask(); // Instantiate SheduledTask class
         st.setTroybot(this);
-        time.schedule(st, 0, 600000); // calls run() every 1 minutes (600,000ms)
+        time.schedule(st, 0, 600000); // calls run() every 10 minutes (600,000ms)
     }
 
     public void ping(MessageChannel channel) {
@@ -484,4 +517,37 @@ public class TroyBot extends ListenerAdapter {
             channel.sendMessage(msg).queue();
         }
     }
+
+    private void list(MessageChannel channel, Message msg) {
+        String s = msg.getContentRaw();
+        List<Role> mentionedRoles = msg.getMentionedRoles();
+        if (mentionedRoles.size() == 0) {
+            int start = s.indexOf('\"');
+            int end = s.lastIndexOf('\"');
+            if (end - start > 0) {
+                String roleName = s.substring(start + 1, end);
+                mentionedRoles = new ArrayList<>();
+                List<Role> role = guild.getRolesByName(roleName, true);
+                if (role.size() == 1) {
+                    mentionedRoles.add(role.get(0));
+                }
+            }
+        }
+        s = "";
+        for (Role role : mentionedRoles) {
+            s += "Role: " + role.getName() + "\n";
+            for (Member mem : guild.getMembersWithRoles(role)) {
+                s += mem.getEffectiveName() + "\n";
+            }
+            if (guild.getMembersWithRoles(role).size() == 0) {
+                s += "No one has that role!\n";
+            }
+        }
+        if (s.equals("")) {
+            s = "No roles were mentioned";
+        }
+        channel.sendMessage(s).queue();
+    }
+
+
 }

@@ -15,4 +15,6 @@ repositories {
 
 dependencies {
     compile 'net.dv8tion:JDA:4.2.0_198'
+
+    compile 'com.mashape.unirest:unirest-java:1.4.9'
 }
